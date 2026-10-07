@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الاختبار التفاعلي - الإدارة والتسويق</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:"Cairo",sans-serif;
+    background:
+        radial-gradient(circle at top right,#7c3aed 0%,transparent 35%),
+        radial-gradient(circle at bottom left,#2563eb 0%,transparent 35%),
+        linear-gradient(135deg,#111827,#312e81,#111827);
+    min-height:100vh;
+    color:white;
+}
+
+.glass{
+    background:rgba(255,255,255,.10);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+
+.option{
+    transition:.25s ease;
+    cursor:pointer;
+}
+
+.option:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,.16);
+}
+
+.option.correct{
+    background:rgba(34,197,94,.25)!important;
+    border-color:#4ade80!important;
+    box-shadow:0 0 25px rgba(74,222,128,.25);
+}
+
+.option.wrong{
+    background:rgba(239,68,68,.22)!important;
+    border-color:#f87171!important;
+}
+
+.option.disabled{
+    cursor:default;
+}
+
+.correct-answer{
+    animation:correctPulse .8s ease;
+}
+
+@keyframes correctPulse{
+    0%{transform:scale(.97)}
+    50%{transform:scale(1.03)}
+    100%{transform:scale(1)}
+}
+
+.pop{
+    animation:pop .45s ease;
+}
+
+@keyframes pop{
+    0%{transform:scale(.8);opacity:0}
+    100%{transform:scale(1);opacity:1}
+}
+
+.shake{
+    animation:shake .45s ease;
+}
+
+@keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-7px)}
+    75%{transform:translateX(7px)}
+}
+
+.progress-fill{
+    transition:width .5s ease;
+}
+
+.hidden-screen{
+    display:none!important;
+}
+
+.badge{
+    box-shadow:0 0 20px rgba(255,255,255,.12);
+}
+
+button{
+    font-family:inherit;
+}
+
+@media(max-width:640px){
+    .main-card{
+        border-radius:22px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="min-h-screen flex items-center justify-center p-4">
+
+<div class="w-full max-w-2xl">
+
+<!-- ================= التسجيل ================= -->
+
+<section id="registerScreen" class="glass main-card rounded-3xl p-6 md:p-8 text-center pop">
+
+    <div class="text-6xl mb-4">🎓</div>
+
+    <h1 class="text-2xl md:text-3xl font-black mb-3">
+        الاختبار التفاعلي المبهج
+    </h1>
+
+    <p class="text-purple-100 mb-6">
+        الإدارة والتسويق الاحترافي
+    </p>
+
+    <div class="bg-white/10 rounded-2xl p-4 mb-6 text-right">
+        <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>📝 <b>12</b> سؤالاً</div>
+            <div>🎯 اختبار تفاعلي</div>
+            <div>📚 تعلم أثناء الاختبار</div>
+            <div>🏆 نتيجة نهائية</div>
+        </div>
+    </div>
+
+    <input
+        id="nameInput"
+        type="text"
+        maxlength="50"
+        placeholder="اكتب اسمك هنا"
+        class="w-full rounded-2xl bg-white/15 border border-white/20 px-5 py-4 text-white placeholder-white/60 outline-none focus:ring-2 focus:ring-purple-400 text-center mb-4"
+    >
+
+    <button
+        id="startBtn"
+        onclick="startQuiz()"
+        class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 rounded-2xl py-4 font-black text-lg transition hover:scale-[1.02]"
+    >
+        🚀 ابدأ الاختبار
+    </button>
+
+</section>
+
+
+<!-- ================= الاختبار ================= -->
+
+<section id="quizScreen" class="hidden-screen">
+
+    <div class="glass main-card rounded-3xl p-5 md:p-7">
+
+        <!-- معلومات اللاعب -->
+
+        <div class="flex items-center justify-between gap-3 mb-5">
+
+            <div>
+                <div class="text-xs text-purple-200">المتدرب</div>
+                <div id="playerName" class="font-bold"></div>
+            </div>
+
+            <div class="badge bg-white/10 rounded-2xl px-4 py-2 text-center">
+                <div class="text-xs text-purple-200">السؤال</div>
+                <div>
+                    <span id="questionNumber">1</span>
+                    <span class="text-white/50">/ 12</span>
+                </div>
+            </div>
+
+            <div class="badge bg-white/10 rounded-2xl px-4 py-2 text-center">
+                <div class="text-xs text-purple-200">النقاط</div>
+                <div id="scoreDisplay">0</div>
+            </div>
+
+        </div>
+
+        <!-- التقدم -->
+
+        <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-6">
+            <div
+                id="progressBar"
+                class="progress-fill h-full bg-gradient-to-r from-purple-400 to-pink-400"
+                style="width:8.33%"
+            ></div>
+        </div>
+
+        <!-- السؤال -->
+
+        <div class="bg-white/10 rounded-3xl p-5 md:p-6 mb-5">
+
+            <div class="text-purple-200 text-sm mb-3">
+                🧠 فكر جيداً قبل الإجابة
+            </div>
+
+            <h2
+                id="questionText"
+                class="text-xl md:text-2xl font-black leading-relaxed"
+            ></h2>
+
+        </div>
+
+        <!-- الخيارات -->
+
+        <div id="optionsContainer" class="space-y-3"></div>
+
+        <!-- التغذية الراجعة -->
+
+        <div
+            id="feedbackBox"
+            class="hidden mt-5 rounded-2xl p-5 border pop"
+        >
+
+            <div id="feedbackTitle" class="font-black text-lg mb-2"></div>
+
+            <div
+                id="feedbackText"
+                class="text-sm leading-7 text-white/90"
+            ></div>
+
+        </div>
+
+        <!-- زر التالي -->
+
+        <button
+            id="nextBtn"
+            onclick="nextQuestion()"
+            class="hidden w-full mt-5 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 rounded-2xl py-4 font-black text-lg transition"
+        >
+            السؤال التالي ➜
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- ================= المشاركة ================= -->
+
+<section id="shareScreen" class="hidden-screen">
+
+    <div class="glass main-card rounded-3xl p-6 md:p-8 text-center">
+
+        <div class="text-6xl mb-4">🎉</div>
+
+        <h2 class="text-2xl font-black mb-3">
+            ممتاز! أكملت الاختبار
+        </h2>
+
+        <p class="text-purple-100 leading-7 mb-6">
+            شارك الاختبار مع أصدقائك ومجموعاتك على واتساب
+            ثم أكمل إلى النتيجة النهائية.
+        </p>
+
+        <div class="bg-white/10 rounded-3xl p-5 mb-5">
+
+            <div class="text-sm text-purple-200 mb-2">
+                عدد المشاركات
+            </div>
+
+            <div class="text-4xl font-black mb-4">
+                <span id="shareCount">0</span>
+                <span class="text-white/40 text-2xl">/10</span>
+            </div>
+
+            <div class="h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
+                    id="shareProgress"
+                    class="progress-fill h-full bg-gradient-to-r from-green-400 to-emerald-500"
+                    style="width:0%"
+                ></div>
+            </div>
+
+        </div>
+
+        <button
+            onclick="shareWhatsApp()"
+            class="w-full bg-green-500 hover:bg-green-400 rounded-2xl py-4 font-black text-lg transition hover:scale-[1.02]"
+        >
+            💬 مشاركة على واتساب
+        </button>
+
+        <p
+            id="shareWarning"
+            class="hidden text-yellow-300 text-sm mt-4"
+        >
+            اضغط على زر المشاركة مرة أخرى لإكمال العدد المطلوب.
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- ================= النتيجة ================= -->
+
+<section id="resultScreen" class="hidden-screen">
+
+    <div class="glass main-card rounded-3xl p-6 md:p-8 text-center">
+
+        <div class="text-6xl mb-4">🏆</div>
+
+        <h2 class="text-3xl font-black mb-2">
+            أحسنت!
+        </h2>
+
+        <p class="text-purple-100 mb-6">
+            <span id="resultName"></span>
+        </p>
+
+        <div class="bg-white/10 rounded-3xl p-6 mb-6">
+
+            <div class="text-sm text-purple-200">
+                نتيجتك
+            </div>
+
+            <div class="text-6xl font-black my-3">
+                <span id="finalScore">0</span>
+                <span class="text-2xl text-white/40">/12</span>
+            </div>
+
+            <div id="resultMessage" class="font-bold"></div>
+
+        </div>
+
+        <!-- الكورس -->
+
+        <div class="text-right bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-300/20 rounded-3xl p-5 mb-5">
+
+            <div class="text-xl font-black mb-3">
+                🎓 برنامج الإدارة والتسويق
+            </div>
+
+            <div class="space-y-2 text-sm leading-7">
+                <div>✅ الإدارة الحديثة وإدارة الأعمال</div>
+                <div>✅ إدارة وتطوير المشاريع</div>
+                <div>✅ التسويق وفهم العملاء</div>
+                <div>✅ إعداد الخطط التسويقية</div>
+                <div>✅ القيادة وإدارة فرق العمل</div>
+                <div>✅ تأسيس المشاريع وتطويرها</div>
+                <div>✅ تطبيقات عملية ودراسات</div>
+                <div>✅ الشهادات مشمولة</div>
+            </div>
+
+            <div class="mt-5 text-center">
+                <div class="text-sm text-white/60 line-through">
+                    600,000 جنيه
+                </div>
+
+                <div class="text-3xl font-black text-yellow-300">
+                    95,000 جنيه فقط
+                </div>
+            </div>
+
+        </div>
+
+        <!-- التحويل -->
+
+        <div class="bg-white/10 rounded-3xl p-5 text-right mb-5">
+
+            <h3 class="font-black text-lg mb-4">
+                💳 بيانات التحويل
+            </h3>
+
+            <div class="space-y-2 text-sm">
+                <div>
+                    رقم الحساب:
+                    <b class="text-yellow-300">2473368</b>
+                </div>
+
+                <div>
+                    باسم:
+                    <b>محمد طه</b>
+                </div>
+
+                <div>
+                    الرسوم:
+                    <b class="text-yellow-300">95,000 جنيه</b>
+                </div>
+            </div>
+
+        </div>
+
+        <input
+            id="receiptInput"
+            type="text"
+            maxlength="50"
+            placeholder="اكتب رقم إشعار التحويل"
+            class="w-full rounded-2xl bg-white/15 border border-white/20 px-5 py-4 text-white placeholder-white/60 outline-none focus:ring-2 focus:ring-purple-400 text-center mb-4"
+        >
+
+        <button
+            onclick="sendToTrainer()"
+            class="w-full bg-green-500 hover:bg-green-400 rounded-2xl py-4 font-black text-lg transition"
+        >
+            📲 إرسال بيانات التسجيل عبر واتساب
+        </button>
+
+        <button
+            onclick="restartQuiz()"
+            class="w-full mt-3 bg-white/10 hover:bg-white/20 rounded-2xl py-3 font-bold transition"
+        >
+            🔄 إعادة الاختبار
+        </button>
+
+    </div>
+
+</section>
+
+</div>
+</div>
+
+
+<script>
+
+/* =========================================================
+   البيانات
+========================================================= */
+
+const questions = [
+
+{
+    question:"ما المقصود بمفهوم Positioning في التسويق؟",
+    options:[
+        "تحديد سعر المنتج فقط",
+        "إنشاء صورة ذهنية مميزة للمنتج في عقل العميل",
+        "اختيار موظفي الشركة",
+        "زيادة عدد فروع الشركة"
+    ],
+    correct:1,
+    explanation:"الـ Positioning يعني الطريقة التي تريد أن يتذكر بها العميل منتجك مقارنة بالمنافسين."
+},
+
+{
+    question:"ما هو العنصر الخامس في نموذج 5Ps للتسويق؟",
+    options:[
+        "Profit",
+        "Planning",
+        "People",
+        "Performance"
+    ],
+    correct:2,
+    explanation:"People تعني الأشخاص، وتشمل الموظفين والعملاء وكل من يؤثر في تقديم الخدمة أو تجربة العميل."
+},
+
+{
+    question:"ما الهدف الأساسي من تحليل SWOT؟",
+    options:[
+        "حساب الأرباح فقط",
+        "ربط نقاط القوة والضعف بالفرص والتهديدات",
+        "تحديد رواتب الموظفين",
+        "اختيار اسم الشركة"
+    ],
+    correct:1,
+    explanation:"SWOT يساعد المؤسسة على فهم نقاط القوة والضعف داخلياً والفرص والتهديدات خارجياً لاتخاذ قرارات أفضل."
+},
+
+{
+    question:"ما المقصود باستراتيجية Price Skimming؟",
+    options:[
+        "بيع المنتج بسعر منخفض دائماً",
+        "بدء المنتج بسعر مرتفع ثم تخفيضه تدريجياً",
+        "تقديم المنتج مجاناً",
+        "توحيد أسعار جميع المنتجات"
+    ],
+    correct:1,
+    explanation:"تبدأ الشركة بسعر مرتفع لاستهداف العملاء المستعدين للدفع، ثم تخفض السعر تدريجياً للوصول إلى شرائح أوسع."
+},
+
+{
+    question:"ما المقصود بالتفويض Delegation؟",
+    options:[
+        "إلغاء مسؤولية المدير",
+        "نقل بعض الصلاحيات والمهام للآخرين مع بقاء المسؤولية العامة",
+        "منع الموظفين من اتخاذ القرارات",
+        "إلغاء الهيكل الإداري"
+    ],
+    correct:1,
+    explanation:"التفويض يمنح الموظف صلاحية تنفيذ مهام معينة واتخاذ قرارات ضمن حدود محددة، بينما يحتفظ المدير بالمسؤولية العامة."
+},
+
+{
+    question:"ما التسلسل الأساسي لدورة حياة المشروع؟",
+    options:[
+        "التخطيط ثم التنفيذ ثم المتابعة والتحكم ثم الإغلاق",
+        "التنفيذ ثم التخطيط ثم الإغلاق",
+        "الإغلاق ثم التنفيذ ثم التخطيط",
+        "التسويق ثم التوظيف ثم البيع"
+    ],
+    correct:0,
+    explanation:"تمر المشاريع عادة بمراحل التخطيط والتنفيذ والمراقبة والتحكم ثم الإغلاق."
+},
+
+{
+    question:"ماذا يقيس مؤشر NPS؟",
+    options:[
+        "مدى استعداد العملاء للتوصية بالمنتج أو الخدمة",
+        "عدد الموظفين",
+        "حجم المبيعات فقط",
+        "تكلفة الإعلان"
+    ],
+    correct:0,
+    explanation:"NPS أو Net Promoter Score يقيس مدى استعداد العملاء للتوصية بالشركة أو المنتج للآخرين."
+},
+
+{
+    question:"ما المقصود بالذكاء العاطفي في الإدارة؟",
+    options:[
+        "حفظ المعلومات بسرعة",
+        "فهم وإدارة المشاعر الذاتية وبناء علاقات فعالة",
+        "زيادة ساعات العمل",
+        "استخدام برامج المحاسبة"
+    ],
+    correct:1,
+    explanation:"الذكاء العاطفي يساعد القائد على فهم مشاعره ومشاعر الآخرين والتعامل معها بطريقة فعالة."
+},
+
+{
+    question:"ما إحدى أهم مزايا التسويق الرقمي؟",
+    options:[
+        "عدم الحاجة إلى معرفة العملاء",
+        "الاستهداف الدقيق وقياس النتائج والعائد على الاستثمار",
+        "منع المنافسة",
+        "عدم الحاجة إلى محتوى"
+    ],
+    correct:1,
+    explanation:"من أهم مزايا التسويق الرقمي إمكانية استهداف شرائح محددة وقياس النتائج وتحليل العائد على الاستثمار."
+},
+
+{
+    question:"ما المقصود بإدارة التغيير Change Management؟",
+    options:[
+        "إجبار الموظفين على العمل",
+        "منهجية منظمة لمساعدة الأفراد والفرق على تبني التغيير بنجاح",
+        "إلغاء الإدارة",
+        "تغيير شعار الشركة فقط"
+    ],
+    correct:1,
+    explanation:"إدارة التغيير تساعد الأفراد والمؤسسات على الانتقال من الوضع الحالي إلى الوضع المستهدف بأقل مقاومة ممكنة."
+},
+
+{
+    question:"كيف يمكن لشركة صغيرة منافسة منافس قوي؟",
+    options:[
+        "تقليد المنافس بالكامل",
+        "التركيز على سوق متخصص وتقديم قيمة مميزة",
+        "رفع الأسعار دون سبب",
+        "تجاهل العملاء"
+    ],
+    correct:1,
+    explanation:"التركيز على سوق متخصص مع تقديم قيمة واضحة ومميزة يمكن أن يمنح الشركة الصغيرة ميزة تنافسية قوية."
+},
+
+{
+    question:"ما المهارة المهمة في المشاريع الدولية العابرة للحدود؟",
+    options:[
+        "إدارة التنوع الثقافي والتواصل وحل النزاعات",
+        "تجاهل الاختلافات الثقافية",
+        "استخدام لغة واحدة فقط",
+        "منع التواصل بين الفرق"
+    ],
+    correct:0,
+    explanation:"المشاريع الدولية تحتاج إلى فهم الاختلافات الثقافية والتواصل الفعال وإدارة النزاعات بين الفرق."
+}
+
+];
+
+
+/* =========================================================
+   المتغيرات
+========================================================= */
+
+let currentQuestion = 0;
+let score = 0;
+let userName = "";
+let answered = false;
+let shareCount = 0;
+
+
+/* =========================================================
+   الصوت
+========================================================= */
+
+let audioCtx = null;
+
+function initAudio(){
+
+    try{
+
+        if(!audioCtx){
+
+            const AudioContext =
+                window.AudioContext ||
+                window.webkitAudioContext;
+
+            if(AudioContext){
+                audioCtx = new AudioContext();
+            }
+
+        }
+
+        if(audioCtx && audioCtx.state === "suspended"){
+            audioCtx.resume();
+        }
+
+    }catch(e){
+        console.log("Audio unavailable");
+    }
+}
+
+
+function tone(frequency, duration, type="sine", volume=.12, delay=0){
+
+    if(!audioCtx) return;
+
+    try{
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = type;
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime + delay;
+
+        osc.frequency.setValueAtTime(frequency,now);
+
+        gain.gain.setValueAtTime(.001,now);
+        gain.gain.exponentialRampToValueAtTime(volume,now+.03);
+        gain.gain.exponentialRampToValueAtTime(.001,now+duration);
+
+        osc.start(now);
+        osc.stop(now+duration+.03);
+
+    }catch(e){}
+
+}
+
+
+/* صوت إجابة صحيحة — ممتع */
+
+function playCorrect(){
+
+    initAudio();
+
+    tone(523.25,.18,"sine",.12,0);
+    tone(659.25,.18,"sine",.12,.08);
+    tone(783.99,.30,"sine",.14,.16);
+
+}
+
+
+/* صوت خطأ — هادئ وتعليمي وليس مزعجاً */
+
+function playWrong(){
+
+    initAudio();
+
+    tone(330,.16,"sine",.08,0);
+    tone(277,.22,"sine",.07,.10);
+
+}
+
+
+/* صوت إظهار الإجابة */
+
+function playReveal(){
+
+    initAudio();
+
+    tone(440,.12,"sine",.07,0);
+    tone(554.37,.18,"sine",.08,.10);
+
+}
+
+
+/* صوت الفوز */
+
+function playWin(){
+
+    initAudio();
+
+    [
+        523.25,
+        659.25,
+        783.99,
+        1046.50
+    ].forEach((f,i)=>{
+
+        tone(
+            f,
+            .35,
+            "sine",
+            .14,
+            i*.12
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   بدء الاختبار
+========================================================= */
+
+function startQuiz(){
+
+    initAudio();
+
+    const input = document.getElementById("nameInput");
+
+    userName = input.value.trim();
+
+    if(!userName){
+
+        input.classList.add("shake");
+
+        setTimeout(()=>{
+            input.classList.remove("shake");
+        },500);
+
+        input.focus();
+
+        return;
+    }
+
+    currentQuestion = 0;
+    score = 0;
+
+    document.getElementById("registerScreen")
+        .classList.add("hidden-screen");
+
+    document.getElementById("quizScreen")
+        .classList.remove("hidden-screen");
+
+    document.getElementById("playerName")
+        .textContent = userName;
+
+    loadQuestion();
+
+}
+
+
+/* =========================================================
+   عرض السؤال
+========================================================= */
+
+function loadQuestion(){
+
+    answered = false;
+
+    const q = questions[currentQuestion];
+
+    document.getElementById("questionNumber")
+        .textContent = currentQuestion + 1;
+
+    document.getElementById("scoreDisplay")
+        .textContent = score;
+
+    document.getElementById("progressBar")
+        .style.width =
+        ((currentQuestion + 1) / questions.length * 100) + "%";
+
+    document.getElementById("questionText")
+        .textContent = q.question;
+
+    const container =
+        document.getElementById("optionsContainer");
+
+    container.innerHTML = "";
+
+    document.getElementById("feedbackBox")
+        .classList.add("hidden");
+
+    document.getElementById("nextBtn")
+        .classList.add("hidden");
+
+    q.options.forEach((option,index)=>{
+
+        const button = document.createElement("button");
+
+        button.type = "button";
+
+        button.className =
+            "option w-full text-right bg-white/10 border border-white/10 rounded-2xl p-4 flex items-center gap-3";
+
+        button.innerHTML = `
+            <span class="w-9 h-9 shrink-0 rounded-xl bg-white/10 flex items-center justify-center font-black">
+                ${String.fromCharCode(65+index)}
+            </span>
+            <span class="font-semibold leading-7">${option}</span>
+        `;
+
+        button.onclick = ()=>{
+            selectOption(index,button);
+        };
+
+        container.appendChild(button);
+
+    });
+
+}
+
+
+/* =========================================================
+   اختيار الإجابة
+========================================================= */
+
+function selectOption(selectedIndex,selectedButton){
+
+    if(answered) return;
+
+    answered = true;
+
+    const q = questions[currentQuestion];
+
+    const allButtons =
+        document.querySelectorAll(".option");
+
+    allButtons.forEach(btn=>{
+        btn.classList.add("disabled");
+    });
+
+
+    /* الإجابة صحيحة */
+
+    if(selectedIndex === q.correct){
+
+        score++;
+
+        selectedButton.classList.add(
+            "correct",
+            "correct-answer"
+        );
+
+        playCorrect();
+
+        showFeedback(
+            true,
+            "🎉 ممتاز! إجابة صحيحة",
+            "أحسنت! إجابتك صحيحة. " + q.explanation
+        );
+
+        confetti({
+            particleCount:45,
+            spread:65,
+            startVelocity:22,
+            origin:{y:.65}
+        });
+
+    }
+
+    /* الإجابة خاطئة */
+
+    else{
+
+        selectedButton.classList.add(
+            "wrong",
+            "shake"
+        );
+
+        /* تحديد الإجابة الصحيحة */
+
+        allButtons[q.correct]
+            .classList.add(
+                "correct",
+                "correct-answer"
+            );
+
+        playWrong();
+        playReveal();
+
+        showFeedback(
+            false,
+            "💡 ليس تماماً — تعلّمها الآن",
+            `الإجابة الصحيحة هي: "${q.options[q.correct]}". ${q.explanation}`
+        );
+
+    }
+
+    document.getElementById("scoreDisplay")
+        .textContent = score;
+
+    document.getElementById("nextBtn")
+        .classList.remove("hidden");
+
+    if(currentQuestion === questions.length - 1){
+
+        document.getElementById("nextBtn")
+            .textContent = "🏆 عرض النتيجة";
+
+    }
+
+}
+
+
+/* =========================================================
+   صندوق التعليم
+========================================================= */
+
+function showFeedback(correct,title,text){
+
+    const box =
+        document.getElementById("feedbackBox");
+
+    const titleEl =
+        document.getElementById("feedbackTitle");
+
+    const textEl =
+        document.getElementById("feedbackText");
+
+    box.classList.remove(
+        "hidden",
+        "bg-green-500/20",
+        "border-green-400/40",
+        "bg-yellow-500/20",
+        "border-yellow-400/40"
+    );
+
+    if(correct){
+
+        box.classList.add(
+            "bg-green-500/20",
+            "border-green-400/40"
+        );
+
+        titleEl.className =
+            "font-black text-lg mb-2 text-green-300";
+
+    }else{
+
+        box.classList.add(
+            "bg-yellow-500/20",
+            "border-yellow-400/40"
+        );
+
+        titleEl.className =
+            "font-black text-lg mb-2 text-yellow-300";
+
+    }
+
+    titleEl.textContent = title;
+    textEl.textContent = text;
+
+}
+
+
+/* =========================================================
+   السؤال التالي
+========================================================= */
+
+function nextQuestion(){
+
+    if(!answered) return;
+
+    if(currentQuestion < questions.length - 1){
+
+        currentQuestion++;
+
+        loadQuestion();
+
+        window.scrollTo({
+            top:0,
+            behavior:"smooth"
+        });
+
+    }else{
+
+        showShareScreen();
+
+    }
+
+}
+
+
+/* =========================================================
+   شاشة المشاركة
+========================================================= */
+
+function showShareScreen(){
+
+    document.getElementById("quizScreen")
+        .classList.add("hidden-screen");
+
+    document.getElementById("shareScreen")
+        .classList.remove("hidden-screen");
+
+    document.getElementById("shareCount")
+        .textContent = shareCount;
+
+}
+
+
+/* =========================================================
+   واتساب المشاركة
+========================================================= */
+
+function shareWhatsApp(){
+
+    const promotionalMessage =
+`🚀 *اختبار الإدارة والتسويق التفاعلي* 🎓
+
+اختبرت معلوماتي في الإدارة والتسويق، والاختبار ممتع وتعليمي ويعطيك الإجابة الصحيحة بعد كل سؤال.
+
+🔥 جرب الاختبار بنفسك واكتشف مستواك!
+
+💼 يوجد أيضاً برنامج شامل في الإدارة والتسويق مع الشهادات.
+
+💰 الرسوم الحالية: 95,000 جنيه فقط بدلاً من 600,000 جنيه.
+
+🔗 رابط الاختبار:
+${window.location.href}`;
+
+    const shareText =
+        encodeURIComponent(promotionalMessage);
+
+    window.open(
+        `https://api.whatsapp.com/send?text=${shareText}`,
+        "_blank"
+    );
+
+
+    if(shareCount < 10){
+
+        shareCount++;
+
+        document.getElementById("shareCount")
+            .textContent = shareCount;
+
+        document.getElementById("shareProgress")
+            .style.width =
+            (shareCount / 10 * 100) + "%";
+
+        if(shareCount < 10){
+
+            document.getElementById("shareWarning")
+                .classList.remove("hidden");
+
+        }else{
+
+            document.getElementById("shareWarning")
+                .textContent =
+                "🎉 أحسنت! اكتملت المشاركة. سيتم عرض نتيجتك.";
+
+            document.getElementById("shareWarning")
+                .classList.remove("hidden");
+
+            setTimeout(showResults,800);
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   عرض النتيجة
+========================================================= */
+
+function showResults(){
+
+    document.getElementById("shareScreen")
+        .classList.add("hidden-screen");
+
+    document.getElementById("resultScreen")
+        .classList.remove("hidden-screen");
+
+    document.getElementById("resultName")
+        .textContent = userName;
+
+    document.getElementById("finalScore")
+        .textContent = score;
+
+
+    let message = "";
+
+    const percentage =
+        (score / questions.length) * 100;
+
+    if(percentage >= 90){
+
+        message = "🔥 ممتاز جداً! لديك مستوى قوي في الإدارة والتسويق.";
+
+    }else if(percentage >= 75){
+
+        message = "👏 نتيجة رائعة! لديك أساس جيد ويمكنك تطويره أكثر.";
+
+    }else if(percentage >= 50){
+
+        message = "💪 بداية جيدة! راجع المفاهيم وستصبح أقوى.";
+
+    }else{
+
+        message = "🌱 بداية جميلة! الاختبار نفسه ساعدك على اكتساب معلومات جديدة.";
+
+    }
+
+    document.getElementById("resultMessage")
+        .textContent = message;
+
+    playWin();
+
+    confetti({
+        particleCount:180,
+        spread:100,
+        startVelocity:30,
+        origin:{y:.55}
+    });
+
+}
+
+
+/* =========================================================
+   إرسال بيانات التسجيل للمدرب
+========================================================= */
+
+function sendToTrainer(){
+
+    const receipt =
+        document.getElementById("receiptInput")
+        .value.trim();
+
+    if(!receipt){
+
+        document.getElementById("receiptInput")
+            .classList.add("shake");
+
+        setTimeout(()=>{
+            document.getElementById("receiptInput")
+                .classList.remove("shake");
+        },500);
+
+        document.getElementById("receiptInput")
+            .focus();
+
+        return;
+    }
+
+
+    const trainerPhone =
+        "249901946410";
+
+
+    const message =
+`السلام عليكم أستاذي الكريم،
+
+أنا المتدرب: ${userName}
+
+📊 نتيجتي في الاختبار التفاعلي:
+${score} من 12
+
+🎓 أرغب في التسجيل في برنامج الإدارة والتسويق.
+
+💳 بيانات التحويل:
+- رقم الحساب: 2473368
+- باسم: محمد طه
+- رسوم الكورس: 95,000 جنيه
+
+🧾 رقم إشعار التحويل:
+${receipt}
+
+أرجو اعتماد تسجيلي وتأكيد الحجز.
+شكراً لكم 🙏`;
+
+
+    const encodedMessage =
+        encodeURIComponent(message);
+
+
+    window.open(
+        `https://api.whatsapp.com/send?phone=${trainerPhone}&text=${encodedMessage}`,
+        "_blank"
+    );
+
+}
+
+
+/* =========================================================
+   إعادة الاختبار
+========================================================= */
+
+function restartQuiz(){
+
+    currentQuestion = 0;
+    score = 0;
+    shareCount = 0;
+    answered = false;
+
+    document.getElementById("resultScreen")
+        .classList.add("hidden-screen");
+
+    document.getElementById("shareScreen")
+        .classList.add("hidden-screen");
+
+    document.getElementById("quizScreen")
+        .classList.remove("hidden-screen");
+
+    loadQuestion();
+
+}
+
+</script>
+
+</body>
+</html>
